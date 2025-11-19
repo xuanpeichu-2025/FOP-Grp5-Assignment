@@ -29,7 +29,7 @@ public class MainMenu {
 
             switch (choice) {
 
-                case 1: // Add normal event
+                case 1: 
                     System.out.print("Title: ");
                     String title = input.nextLine();
                     System.out.print("Description: ");
@@ -43,7 +43,7 @@ public class MainMenu {
                     System.out.println("Event added!");
                     break;
 
-                case 2: // Add recurring event
+                case 2: 
                     System.out.print("Title: ");
                     String rTitle = input.nextLine();
                     System.out.print("Description: ");
@@ -62,7 +62,7 @@ public class MainMenu {
                     System.out.println("Recurring event added!");
                     break;
 
-                case 3: // View events - pretty table
+                case 3: 
                     System.out.println("\n===== ALL EVENTS =====");
                     System.out.printf("%-4s | %-9s | %-15s | %-16s | %-16s | %-12s\n", 
                                       "ID", "Type", "Title", "Start", "End", "Recurrence");
@@ -84,7 +84,7 @@ public class MainMenu {
                     }
                     break;
 
-                case 4: // Update event
+                case 4: 
                     System.out.print("Enter Event ID to update: ");
                     int updId = input.nextInt();
                     input.nextLine();
@@ -111,7 +111,7 @@ public class MainMenu {
                     System.out.println("Event updated!");
                     break;
 
-                case 5: // Delete event
+                case 5: 
                     System.out.print("Enter Event ID to delete: ");
                     int delId = input.nextInt();
                     input.nextLine();
@@ -119,7 +119,7 @@ public class MainMenu {
                     else System.out.println("Event not found!");
                     break;
 
-                case 6: // Save & exit
+                case 6: 
                     CSVHandler.saveEvents(manager);
                     System.out.println("Saved! Goodbye!");
                     System.exit(0);
@@ -130,5 +130,6 @@ public class MainMenu {
         }
     }
 }
+
 
 
