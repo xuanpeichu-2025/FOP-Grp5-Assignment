@@ -17,8 +17,9 @@ public class CSVHandler {
                 if (e instanceof RecurringEvent r) {
                     extra = "," + r.getRecurrenceType() + "," + r.getOccurrences();
                 }
+                String reminder = e.getReminder() != null ? "," + e.getReminder().getMinutesBefore() : ",";
                 pw.println(e.getEventId() + "," + type + "," + e.getTitle() + "," + e.getDescription() + "," +
-                        e.getStartDateTime().format(formatter) + "," + e.getEndDateTime().format(formatter) + extra);
+                        e.getStartDateTime().format(formatter) + "," + e.getEndDateTime().format(formatter) + extra + reminder);
             }
         } catch (IOException ex) {
             System.out.println("Error saving CSV: " + ex.getMessage());
@@ -41,16 +42,26 @@ public class CSVHandler {
                 LocalDateTime start = LocalDateTime.parse(parts[4], formatter);
                 LocalDateTime end = LocalDateTime.parse(parts[5], formatter);
 
+                MainEvent event;
                 if ("RECURRING".equals(type)) {
                     String recurrenceType = parts[6];
                     int occurrences = Integer.parseInt(parts[7]);
-                    RecurringEvent r = new RecurringEvent(id, title, desc, start, end, recurrenceType, occurrences);
-                    manager.addEvent(r);
+                    event = new RecurringEvent(id, title, desc, start, end, recurrenceType, occurrences);
+                    // Reminder is at index 8 for recurring events
+                    if (parts.length > 8 && !parts[8].isEmpty()) {
+                        int reminderMinutes = Integer.parseInt(parts[8]);
+                        event.setReminder(new Reminder(reminderMinutes));
+                    }
                 } else {
-                    MainEvent e = new MainEvent(id, title, desc, start, end);
-                    manager.addEvent(e);
+                    event = new MainEvent(id, title, desc, start, end);
+                    // Reminder is at index 6 for normal events
+                    if (parts.length > 6 && !parts[6].isEmpty()) {
+                        int reminderMinutes = Integer.parseInt(parts[6]);
+                        event.setReminder(new Reminder(reminderMinutes));
+                    }
                 }
 
+                manager.addEvent(event);
                 if (id > maxId) maxId = id;
             }
             manager.setNextEventId(maxId + 1);

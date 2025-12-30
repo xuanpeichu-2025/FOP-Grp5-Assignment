@@ -18,12 +18,16 @@ public class MainMenu {
         CalendarView calendarView = new CalendarView();
         SearchEvent searchEvent = new SearchEvent();
 
+        // Display notifications on startup
+        NotificationManager.checkAndDisplayNotifications(manager);
+
         while (true) {
             System.out.println("\n===== MAIN MENU =====");
             System.out.println("1. Event Management");
             System.out.println("2. Calendar View");
             System.out.println("3. Search Event");
-            System.out.println("4. Save & Exit");
+            System.out.println("4. Manage Reminders");
+            System.out.println("5. Save & Exit");
             System.out.print("Enter choice: ");
             int mainChoice = input.nextInt();
             input.nextLine();
@@ -42,6 +46,10 @@ public class MainMenu {
                     break;
 
                 case 4:
+                    manageRemindersMenu(manager, input);
+                    break;
+
+                case 5:
                     CSVHandler.saveEvents(manager);
                     System.out.println("Saved! Goodbye!");
                     System.exit(0);
@@ -103,22 +111,24 @@ public class MainMenu {
 
                 case 3:
                     System.out.println("\n--- ALL EVENTS ---");
-                    System.out.printf("%-4s | %-9s | %-15s | %-16s | %-16s | %-12s\n",
-                            "ID", "Type", "Title", "Start", "End", "Recurrence");
-                    System.out.println("--------------------------------------------------------------------------------");
+                    System.out.printf("%-4s | %-9s | %-15s | %-16s | %-16s | %-12s | %-20s\n",
+                            "ID", "Type", "Title", "Start", "End", "Recurrence", "Reminder");
+                    System.out.println("────────────────────────────────────────────────────────────────────────────────────────────");
                     for (MainEvent ev : manager.getAllEvents()) {
                         String type = ev instanceof RecurringEvent ? "RECURRING" : "NORMAL";
                         String recurrence = "-";
                         if (ev instanceof RecurringEvent re) {
                             recurrence = re.getRecurrenceType() + " x" + re.getOccurrences();
                         }
-                        System.out.printf("%-4d | %-9s | %-15s | %-16s | %-16s | %-12s\n",
+                        String reminderText = ev.getReminder() != null ? ev.getReminder().getDisplayText() : "-";
+                        System.out.printf("%-4d | %-9s | %-15s | %-16s | %-16s | %-12s | %-20s\n",
                                 ev.getEventId(),
                                 type,
                                 ev.getTitle(),
                                 ev.getStartDateTime().format(dateTimeFormatter),
                                 ev.getEndDateTime().format(dateTimeFormatter),
-                                recurrence
+                                recurrence,
+                                reminderText
                         );
                     }
                     break;
@@ -273,5 +283,146 @@ public class MainMenu {
                     System.out.println("Invalid option!");
             }        
         }
+    }
+
+    private static void manageRemindersMenu(EventManager manager, Scanner input) {
+        while (true) {
+            System.out.println("\n--- MANAGE REMINDERS ---");
+            System.out.println("1. Set Reminder for Event");
+            System.out.println("2. View Event Reminders");
+            System.out.println("3. Remove Reminder from Event");
+            System.out.println("4. Check Reminders Now");
+            System.out.println("5. Back to Main Menu");
+            System.out.print("Enter choice: ");
+
+            int choice = input.nextInt();
+            input.nextLine();
+
+            switch (choice) {
+                case 1:
+                    setReminderForEvent(manager, input);
+                    break;
+
+                case 2:
+                    viewEventReminders(manager);
+                    break;
+
+                case 3:
+                    removeReminderFromEvent(manager, input);
+                    break;
+
+                case 4:
+                    NotificationManager.checkAndDisplayNotifications(manager);
+                    break;
+
+                case 5:
+                    return;
+
+                default:
+                    System.out.println("Invalid option!");
+            }
+        }
+    }
+
+    private static void setReminderForEvent(EventManager manager, Scanner input) {
+        System.out.println("\n--- SET REMINDER ---");
+        System.out.print("Enter Event ID: ");
+        int eventId = input.nextInt();
+        input.nextLine();
+
+        MainEvent event = manager.findEventById(eventId);
+        if (event == null) {
+            System.out.println("Event not found!");
+            return;
+        }
+
+        System.out.println("\nReminder options:");
+        System.out.println("1. 15 minutes before");
+        System.out.println("2. 30 minutes before");
+        System.out.println("3. 1 hour before");
+        System.out.println("4. 2 hours before");
+        System.out.println("5. 1 day before");
+        System.out.println("6. Custom minutes before");
+        System.out.print("Enter choice: ");
+
+        int reminderChoice = input.nextInt();
+        input.nextLine();
+
+        int minutesBefore = 0;
+        switch (reminderChoice) {
+            case 1:
+                minutesBefore = 15;
+                break;
+            case 2:
+                minutesBefore = 30;
+                break;
+            case 3:
+                minutesBefore = 60;
+                break;
+            case 4:
+                minutesBefore = 120;
+                break;
+            case 5:
+                minutesBefore = 1440;
+                break;
+            case 6:
+                System.out.print("Enter minutes before event: ");
+                minutesBefore = input.nextInt();
+                input.nextLine();
+                break;
+            default:
+                System.out.println("Invalid option!");
+                return;
+        }
+
+        event.setReminder(new Reminder(minutesBefore));
+        System.out.println("✓ Reminder set for '" + event.getTitle() + "': " + event.getReminder().getDisplayText());
+    }
+
+    private static void viewEventReminders(EventManager manager) {
+        System.out.println("\n--- EVENT REMINDERS ---");
+        boolean hasReminders = false;
+
+        System.out.printf("%-4s | %-20s | %-25s | %-15s\n",
+                "ID", "Event Title", "Event Start", "Reminder");
+        System.out.println("─────────────────────────────────────────────────────────────────");
+
+        for (MainEvent event : manager.getAllEvents()) {
+            if (event.getReminder() != null) {
+                hasReminders = true;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                System.out.printf("%-4d | %-20s | %-25s | %-15s\n",
+                        event.getEventId(),
+                        event.getTitle(),
+                        event.getStartDateTime().format(formatter),
+                        event.getReminder().getDisplayText()
+                );
+            }
+        }
+
+        if (!hasReminders) {
+            System.out.println("No reminders set for any events.");
+        }
+    }
+
+    private static void removeReminderFromEvent(EventManager manager, Scanner input) {
+        System.out.println("\n--- REMOVE REMINDER ---");
+        System.out.print("Enter Event ID: ");
+        int eventId = input.nextInt();
+        input.nextLine();
+
+        MainEvent event = manager.findEventById(eventId);
+        if (event == null) {
+            System.out.println("Event not found!");
+            return;
+        }
+
+        if (event.getReminder() == null) {
+            System.out.println("This event has no reminder set.");
+            return;
+        }
+
+        event.setReminder(null);
+        System.out.println("Reminder removed from '" + event.getTitle() + "'");
     }
 }
