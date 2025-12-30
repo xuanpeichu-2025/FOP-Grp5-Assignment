@@ -143,8 +143,7 @@ This project fulfills all requirements for full marks (20/20):
 ## 👥 Group 5
 
 **Course:** Fundamentals of Programming  
-**Year:** 2024  
-**Status:** ✅ Complete - Ready for submission
+**Year:** 2025/2026 
 
 ## 📄 License
 
