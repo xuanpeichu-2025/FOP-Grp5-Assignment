@@ -2,6 +2,8 @@ package com.mycompany.calendarapp;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecurringEvent extends MainEvent {
 
@@ -29,6 +31,34 @@ public class RecurringEvent extends MainEvent {
             case "MONTHLY": return current.plus(1, ChronoUnit.MONTHS);
             default: return current;
         }
+    }
+    
+    /**
+     * Generate all occurrences of this recurring event
+     * @return List of MainEvent objects representing each occurrence
+     */
+    public List<MainEvent> generateOccurrences() {
+        List<MainEvent> occurrencesList = new ArrayList<>();
+        LocalDateTime currentStart = this.getStartDateTime();
+        LocalDateTime currentEnd = this.getEndDateTime();
+        long duration = ChronoUnit.MINUTES.between(currentStart, currentEnd);
+        
+        for (int i = 0; i < occurrences; i++) {
+            MainEvent occurrence = new MainEvent(
+                this.getEventId(), 
+                this.getTitle() + " (Occurrence " + (i + 1) + ")", 
+                this.getDescription(), 
+                currentStart, 
+                currentEnd
+            );
+            occurrencesList.add(occurrence);
+            
+            // Move to next occurrence
+            currentStart = getNextOccurrence(currentStart);
+            currentEnd = currentStart.plus(duration, ChronoUnit.MINUTES);
+        }
+        
+        return occurrencesList;
     }
 
     @Override

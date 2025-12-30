@@ -1,0 +1,40 @@
+# Build outputs
+**/target/
+**/build/
+*.class
+
+# IDE/project files
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+
+# Logs and temp
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local libraries/binaries
+libs/
+CalendarApp/libs/
+
+# App-generated backups
+CalendarApp/backups/
+CalendarApp/src/main/java/backups/
+
+# Local-only docs (not pushed)
+CLEANUP_SUMMARY.md
+FINAL_IMPLEMENTATION_REPORT.md
+NEW_FEATURES_GUIDE.md
+QUICK_REFERENCE.md
+
+# Stray data copies in source tree
+CalendarApp/src/main/java/*.csv

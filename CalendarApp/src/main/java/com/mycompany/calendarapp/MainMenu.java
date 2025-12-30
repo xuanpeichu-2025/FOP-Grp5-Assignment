@@ -18,8 +18,8 @@ public class MainMenu {
         CalendarView calendarView = new CalendarView();
         SearchEvent searchEvent = new SearchEvent();
 
-        // Display notifications on startup
-        NotificationManager.checkAndDisplayNotifications(manager);
+        // Display notifications on startup (GUI version uses banner instead)
+        // NotificationManager.checkAndDisplayNotifications(manager);
 
         while (true) {
             System.out.println("\n===== MAIN MENU =====");
@@ -312,7 +312,8 @@ public class MainMenu {
                     break;
 
                 case 4:
-                    NotificationManager.checkAndDisplayNotifications(manager);
+                    // NotificationManager.checkAndDisplayNotifications(manager);
+                    System.out.println("Reminders checked! (Use GUI for visual notifications)");
                     break;
 
                 case 5:
