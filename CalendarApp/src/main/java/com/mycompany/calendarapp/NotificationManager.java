@@ -28,22 +28,15 @@ public class NotificationManager {
         LocalDateTime now = LocalDateTime.now();
         List<MainEvent> upcomingEvents = new ArrayList<>();
 
-        // Find events that should trigger notifications
+        // Only show notifications for events that have explicit reminders
         for (MainEvent event : manager.getAllEventsExpanded()) {
-            if (event.getStartDateTime().isAfter(now)) {
-                // Check if event is within reminder time
-                if (event.getReminder() != null) {
-                    long minutesUntilEvent = ChronoUnit.MINUTES.between(now, event.getStartDateTime());
-                    if (minutesUntilEvent <= event.getReminder().getMinutesBefore() && minutesUntilEvent >= 0) {
-                        upcomingEvents.add(event);
-                    }
-                } else {
-                    // Default: show events happening within next 2 hours
-                    long minutesUntilEvent = ChronoUnit.MINUTES.between(now, event.getStartDateTime());
-                    if (minutesUntilEvent >= 0 && minutesUntilEvent <= 120) {
-                        upcomingEvents.add(event);
-                    }
-                }
+            if (event.getReminder() == null) continue; // No reminder set
+            if (!event.getStartDateTime().isAfter(now)) continue; // Already started
+
+            long minutesUntilEvent = ChronoUnit.MINUTES.between(now, event.getStartDateTime());
+            // Trigger only within the configured reminder window
+            if (minutesUntilEvent >= 0 && minutesUntilEvent <= event.getReminder().getMinutesBefore()) {
+                upcomingEvents.add(event);
             }
         }
 

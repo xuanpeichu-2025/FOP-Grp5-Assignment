@@ -208,33 +208,4 @@ public class EventManager {
         return start1.isBefore(end2) && start2.isBefore(end1);
     }
     
-    /**
-     * Find all events that have clashes with any other events
-     * 
-     * This method scans the entire event collection and returns all events
-     * that have at least one scheduling conflict.
-     * 
-     * Useful for:
-     * - Showing users all their scheduling conflicts
-     * - Generating conflict reports
-     * - Calendar validation
-     * 
-     * @return List of events that have conflicts with other events
-     */
-    public List<MainEvent> findAllClashingEvents() {
-        List<MainEvent> clashing = new ArrayList<>();  // Store conflicting events
-        
-        // Check each event against all others
-        for (int i = 0; i < events.size(); i++) {
-            MainEvent event = events.get(i);
-            List<MainEvent> clashes = findClashingEvents(event);  // Find its clashes
-            
-            // If it has clashes and isn't already in our list, add it
-            if (!clashes.isEmpty() && !clashing.contains(event)) {
-                clashing.add(event);
-            }
-        }
-        
-        return clashing;  // Return all events with conflicts
-    }
 }

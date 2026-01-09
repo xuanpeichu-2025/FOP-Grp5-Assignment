@@ -179,9 +179,6 @@ public class CalendarAppGUI extends Application {
         Button btnDeleteEvent = createStyledButton("🗑️ Delete Event", "#FF5722");
         btnDeleteEvent.setOnAction(e -> showDeleteEventDialog());
 
-        Button btnViewClashes = createStyledButton("⚠️ View Clashing Events", "#FF9800");
-        btnViewClashes.setOnAction(e -> showClashingEventsDialog());
-
         Button btnBack = createStyledButton("⬅️ Back to Main Menu", "#607D8B");
         btnBack.setOnAction(e -> {
             Stage currentStage = ((Stage) vbox.getScene().getWindow());
@@ -193,7 +190,7 @@ public class CalendarAppGUI extends Application {
         buttonContainer.setAlignment(javafx.geometry.Pos.TOP_LEFT);
         buttonContainer.getChildren().addAll(btnAddEvent, btnAddRecurring, 
                                   btnViewAllEvents, btnUpdateEvent, btnDeleteEvent, 
-                                  btnViewClashes, btnBack);
+                                  btnBack);
 
         vbox.getChildren().addAll(notificationBanner, title, new Separator(), buttonContainer);
 
@@ -280,40 +277,31 @@ public class CalendarAppGUI extends Application {
                     event.setCategory(categoryBox.getValue());
                     event.setPriority(priorityBox.getValue());
                     
-                    // Check for clashes
+                    // Check for clashes and show notification
                     List<MainEvent> clashes = manager.findClashingEvents(event);
                     if (!clashes.isEmpty()) {
-                        StringBuilder clashMsg = new StringBuilder("⚠️ WARNING: This event clashes with:\n\n");
+                        StringBuilder clashMsg = new StringBuilder("⚠️ NOTIFICATION: This event clashes with:\n\n");
                         for (MainEvent clash : clashes) {
                             clashMsg.append("• ").append(clash.getTitle())
                                    .append(" (").append(clash.getStartDateTime().format(dateTimeFormatter))
                                    .append(" - ").append(clash.getEndDateTime().format(dateTimeFormatter))
                                    .append(")\n");
                         }
-                        clashMsg.append("\n\nChoose an action:");
-
-                        ButtonType replaceExisting = new ButtonType("Replace Existing", ButtonBar.ButtonData.YES);
+                        clashMsg.append("\nDo you still want to add this event?");
+                        
+                        ButtonType addBtn = new ButtonType("Add Event", ButtonBar.ButtonData.YES);
                         ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-                        if (clashes.size() == 1) {
-                            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION, clashMsg.toString(), replaceExisting, cancelBtn);
-                            confirmAlert.setTitle("Event Clash Detected");
-                            confirmAlert.setHeaderText("Scheduling Conflict");
-
-                            ButtonType result = confirmAlert.showAndWait().orElse(cancelBtn);
-
-                            if (result == cancelBtn) {
-                                return false; // user cancelled
-                            } else if (result == replaceExisting) {
-                                // Replace the single conflicting event
-                                MainEvent toRemove = clashes.get(0);
-                                manager.deleteEvent(toRemove.getEventId());
-                            }
-                        } else {
-                            // Multiple clashes: do not allow adding, prompt user to adjust
-                            showAlert(Alert.AlertType.WARNING, "Event Clash Detected", "This event clashes with multiple existing events. Please adjust the event time or delete conflicting events.");
-                            return false;
+                        
+                        Alert confirmAlert = new Alert(Alert.AlertType.WARNING, clashMsg.toString(), addBtn, cancelBtn);
+                        confirmAlert.setTitle("Scheduling Conflict");
+                        confirmAlert.setHeaderText("Time Range Conflict Detected");
+                        
+                        ButtonType result = confirmAlert.showAndWait().orElse(cancelBtn);
+                        
+                        if (result == cancelBtn) {
+                            return false;  // User cancelled
                         }
+                        // If user clicked "Add Event", continue to add the event
                     }
 
                     manager.addEvent(event);
@@ -467,35 +455,28 @@ public class CalendarAppGUI extends Application {
                     // Check for clashes with recurring event occurrences
                     List<MainEvent> clashes = manager.findClashingEvents(event);
                     if (!clashes.isEmpty()) {
-                        StringBuilder clashMsg = new StringBuilder("⚠️ WARNING: This recurring event clashes with:\n\n");
+                        StringBuilder clashMsg = new StringBuilder("⚠️ NOTIFICATION: This recurring event clashes with:\n\n");
                         for (MainEvent clash : clashes) {
                             clashMsg.append("• ").append(clash.getTitle())
                                    .append(" (").append(clash.getStartDateTime().format(dateTimeFormatter))
                                    .append(" - ").append(clash.getEndDateTime().format(dateTimeFormatter))
                                    .append(")\n");
                         }
-                        clashMsg.append("\n\nChoose an action:");
-
-                        ButtonType replaceExisting = new ButtonType("Replace Existing", ButtonBar.ButtonData.YES);
+                        clashMsg.append("\nDo you still want to add this recurring event?");
+                        
+                        ButtonType addBtn = new ButtonType("Add Event", ButtonBar.ButtonData.YES);
                         ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-                        if (clashes.size() == 1) {
-                            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION, clashMsg.toString(), replaceExisting, cancelBtn);
-                            confirmAlert.setTitle("Event Clash Detected");
-                            confirmAlert.setHeaderText("Scheduling Conflict");
-
-                            ButtonType result = confirmAlert.showAndWait().orElse(cancelBtn);
-
-                            if (result == cancelBtn) {
-                                return false;
-                            } else if (result == replaceExisting) {
-                                MainEvent toRemove = clashes.get(0);
-                                manager.deleteEvent(toRemove.getEventId());
-                            }
-                        } else {
-                            showAlert(Alert.AlertType.WARNING, "Event Clash Detected", "This recurring event clashes with multiple existing events. Please adjust the schedule or delete conflicting events.");
-                            return false;
+                        
+                        Alert confirmAlert = new Alert(Alert.AlertType.WARNING, clashMsg.toString(), addBtn, cancelBtn);
+                        confirmAlert.setTitle("Scheduling Conflict");
+                        confirmAlert.setHeaderText("Time Range Conflict Detected");
+                        
+                        ButtonType result = confirmAlert.showAndWait().orElse(cancelBtn);
+                        
+                        if (result == cancelBtn) {
+                            return false;  // User cancelled
                         }
+                        // If user clicked "Add Event", continue to add the event
                     }
                     
                     manager.addEvent(event);
@@ -532,6 +513,21 @@ public class CalendarAppGUI extends Application {
         TableColumn<MainEvent, String> startCol = new TableColumn<>("Start");
         startCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getStartDateTime().format(dateTimeFormatter)));
 
+        TableColumn<MainEvent, String> endCol = new TableColumn<>("End");
+        endCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getEndDateTime().format(dateTimeFormatter)));
+
+        TableColumn<MainEvent, String> locationCol = new TableColumn<>("Location");
+        locationCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(
+            cellData.getValue().getLocation() == null || cellData.getValue().getLocation().isBlank() ? "-" : cellData.getValue().getLocation()));
+
+        TableColumn<MainEvent, String> categoryCol = new TableColumn<>("Category");
+        categoryCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(
+            cellData.getValue().getCategory() == null ? "-" : cellData.getValue().getCategory()));
+
+        TableColumn<MainEvent, String> priorityCol = new TableColumn<>("Priority");
+        priorityCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(
+            cellData.getValue().getPriority() == null ? "-" : cellData.getValue().getPriority()));
+
         TableColumn<MainEvent, String> reminderCol = new TableColumn<>("Reminder");
         reminderCol.setCellValueFactory(cellData -> {
             Reminder r = cellData.getValue().getReminder();
@@ -539,7 +535,7 @@ public class CalendarAppGUI extends Application {
             return new javafx.beans.property.SimpleObjectProperty<>(text);
         });
 
-        table.getColumns().setAll(Arrays.asList(idCol, titleCol, descCol, startCol, reminderCol));
+        table.getColumns().setAll(Arrays.asList(idCol, titleCol, descCol, startCol, endCol, locationCol, categoryCol, priorityCol, reminderCol));
         table.setItems(javafx.collections.FXCollections.observableArrayList(manager.getAllEventsExpanded()));
         table.setPrefHeight(400);
 
@@ -634,6 +630,23 @@ public class CalendarAppGUI extends Application {
 
         TextField titleField = new TextField(event.getTitle());
         TextField descField = new TextField(event.getDescription());
+        TextField locationField = new TextField(event.getLocation() != null ? event.getLocation() : "");
+
+        ComboBox<String> categoryBox = new ComboBox<>();
+        categoryBox.setItems(javafx.collections.FXCollections.observableArrayList(
+            "Work", "Personal", "Meeting", "Birthday", "Holiday", "Other"
+        ));
+        if (event.getCategory() != null) {
+            categoryBox.setValue(event.getCategory());
+        }
+
+        ComboBox<String> priorityBox = new ComboBox<>();
+        priorityBox.setItems(javafx.collections.FXCollections.observableArrayList(
+            "Low", "Medium", "High"
+        ));
+        if (event.getPriority() != null) {
+            priorityBox.setValue(event.getPriority());
+        }
 
         DatePicker startDatePicker = new DatePicker(event.getStartDateTime().toLocalDate());
         DatePicker endDatePicker = new DatePicker(event.getEndDateTime().toLocalDate());
@@ -644,14 +657,20 @@ public class CalendarAppGUI extends Application {
         grid.add(titleField, 1, 0);
         grid.add(new Label("Description:"), 0, 1);
         grid.add(descField, 1, 1);
-        grid.add(new Label("Start Date:"), 0, 2);
-        grid.add(startDatePicker, 1, 2);
-        grid.add(new Label("Start Time:"), 0, 3);
-        grid.add(startTimePicker, 1, 3);
-        grid.add(new Label("End Date:"), 0, 4);
-        grid.add(endDatePicker, 1, 4);
-        grid.add(new Label("End Time:"), 0, 5);
-        grid.add(endTimePicker, 1, 5);
+        grid.add(new Label("Location (Optional):"), 0, 2);
+        grid.add(locationField, 1, 2);
+        grid.add(new Label("Category:"), 0, 3);
+        grid.add(categoryBox, 1, 3);
+        grid.add(new Label("Priority:"), 0, 4);
+        grid.add(priorityBox, 1, 4);
+        grid.add(new Label("Start Date:"), 0, 5);
+        grid.add(startDatePicker, 1, 5);
+        grid.add(new Label("Start Time:"), 0, 6);
+        grid.add(startTimePicker, 1, 6);
+        grid.add(new Label("End Date:"), 0, 7);
+        grid.add(endDatePicker, 1, 7);
+        grid.add(new Label("End Time:"), 0, 8);
+        grid.add(endTimePicker, 1, 8);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -659,9 +678,6 @@ public class CalendarAppGUI extends Application {
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
                 try {
-                    event.setTitle(titleField.getText());
-                    event.setDescription(descField.getText());
-
                     LocalDate startDate = startDatePicker.getValue();
                     LocalDate endDate = endDatePicker.getValue();
                     LocalTime startTime = startTimePicker.getValue();
@@ -670,8 +686,52 @@ public class CalendarAppGUI extends Application {
                         throw new IllegalArgumentException("Please choose start/end date and time.");
                     }
 
-                    event.setStartDateTime(LocalDateTime.of(startDate, startTime));
-                    event.setEndDateTime(LocalDateTime.of(endDate, endTime));
+                    // Build a temporary event to validate clashes without mutating the original yet
+                    MainEvent updated = new MainEvent(event.getEventId(), titleField.getText(), descField.getText(),
+                            LocalDateTime.of(startDate, startTime), LocalDateTime.of(endDate, endTime));
+                    updated.setLocation(locationField.getText());
+                    updated.setCategory(categoryBox.getValue());
+                    updated.setPriority(priorityBox.getValue());
+
+                    // Check for clashes with updated time
+                    List<MainEvent> clashes = manager.findClashingEvents(updated);
+                    if (!clashes.isEmpty()) {
+                        StringBuilder clashMsg = new StringBuilder("⚠️ NOTIFICATION: This event clashes with:\n\n");
+                        for (MainEvent clash : clashes) {
+                            clashMsg.append("• ").append(clash.getTitle())
+                                   .append(" (").append(clash.getStartDateTime().format(dateTimeFormatter))
+                                   .append(" - ").append(clash.getEndDateTime().format(dateTimeFormatter))
+                                   .append(")\n");
+                        }
+                        clashMsg.append("\nDo you still want to update this event?");
+
+                        ButtonType updateBtn = new ButtonType("Update Event", ButtonBar.ButtonData.YES);
+                        ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+                        Alert confirmAlert = new Alert(Alert.AlertType.WARNING, clashMsg.toString(), updateBtn, cancelBtn);
+                        confirmAlert.setTitle("Scheduling Conflict");
+                        confirmAlert.setHeaderText("Time Range Conflict Detected");
+
+                        ButtonType result = confirmAlert.showAndWait().orElse(cancelBtn);
+
+                        if (result == cancelBtn) {
+                            return false;  // User cancelled
+                        }
+                        // If user clicked "Update Event", continue to update
+                    }
+
+                    // Apply updates after user confirmation
+                    event.setTitle(updated.getTitle());
+                    event.setDescription(updated.getDescription());
+                    event.setLocation(updated.getLocation());
+                    event.setCategory(updated.getCategory());
+                    event.setPriority(updated.getPriority());
+                    event.setStartDateTime(updated.getStartDateTime());
+                    event.setEndDateTime(updated.getEndDateTime());
+                    event.setTitle(updated.getTitle());
+                    event.setDescription(updated.getDescription());
+                    event.setStartDateTime(updated.getStartDateTime());
+                    event.setEndDateTime(updated.getEndDateTime());
 
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Event updated successfully!");
                     return true;
@@ -753,66 +813,6 @@ public class CalendarAppGUI extends Application {
             return null;
         });
 
-        dialog.showAndWait();
-    }
-
-    private void showClashingEventsDialog() {
-        List<MainEvent> clashingEvents = manager.findAllClashingEvents();
-        
-        if (clashingEvents.isEmpty()) {
-            showAlert(Alert.AlertType.INFORMATION, "No Clashes", "✅ Great! You have no clashing events.");
-            return;
-        }
-        
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Clashing Events");
-        dialog.setHeaderText("⚠️ Events with Scheduling Conflicts");
-
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(20));
-        content.setStyle(PANEL_STYLE);
-
-        Label info = new Label("The following events have time conflicts with other events:");
-        info.setWrapText(true);
-        info.setStyle("-fx-font-weight: bold; -fx-text-fill: " + TEXT_PRIMARY + ";");
-        content.getChildren().add(info);
-
-        for (MainEvent event : clashingEvents) {
-            VBox eventBox = new VBox(5);
-            eventBox.setStyle(CARD_STYLE + "-fx-border-color: " + ACCENT + "; -fx-border-width: 1.5; -fx-padding: 10;");
-            
-            Label eventTitle = new Label("📌 " + event.getTitle());
-            eventTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 14; -fx-text-fill: " + TEXT_PRIMARY + ";");
-            
-            Label eventTime = new Label("🕐 " + event.getStartDateTime().format(dateTimeFormatter) + 
-                                       " - " + event.getEndDateTime().format(dateTimeFormatter));
-            eventTime.setStyle("-fx-text-fill: " + TEXT_MUTED + ";");
-            
-            // Find what it clashes with
-            List<MainEvent> clashes = manager.findClashingEvents(event);
-            Label clashInfo = new Label("⚠️ Clashes with: " + clashes.size() + " event(s)");
-            clashInfo.setStyle("-fx-text-fill: " + ACCENT + ";");
-            
-            VBox clashDetails = new VBox(3);
-            clashDetails.setPadding(new Insets(5, 0, 0, 20));
-            for (MainEvent clash : clashes) {
-                Label clashLabel = new Label("• " + clash.getTitle() + " (" + 
-                    clash.getStartDateTime().format(dateTimeFormatter) + ")");
-                clashLabel.setStyle("-fx-font-size: 12; -fx-text-fill: " + TEXT_MUTED + ";");
-                clashDetails.getChildren().add(clashLabel);
-            }
-            
-            eventBox.getChildren().addAll(eventTitle, eventTime, clashInfo, clashDetails);
-            content.getChildren().add(eventBox);
-        }
-
-        ScrollPane scrollPane = new ScrollPane(content);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefHeight(400);
-        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: #0f1c2d;");
-        
-        dialog.getDialogPane().setContent(scrollPane);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
         dialog.showAndWait();
     }
 
