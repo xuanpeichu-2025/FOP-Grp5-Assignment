@@ -290,18 +290,32 @@ public class CalendarAppGUI extends Application {
                                    .append(" - ").append(clash.getEndDateTime().format(dateTimeFormatter))
                                    .append(")\n");
                         }
-                        clashMsg.append("\nDo you still want to add this event?");
-                        
-                        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                        confirmAlert.setTitle("Event Clash Detected");
-                        confirmAlert.setHeaderText("Scheduling Conflict");
-                        confirmAlert.setContentText(clashMsg.toString());
-                        
-                        if (confirmAlert.showAndWait().get() != ButtonType.OK) {
+                        clashMsg.append("\n\nChoose an action:");
+
+                        ButtonType replaceExisting = new ButtonType("Replace Existing", ButtonBar.ButtonData.YES);
+                        ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+                        if (clashes.size() == 1) {
+                            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION, clashMsg.toString(), replaceExisting, cancelBtn);
+                            confirmAlert.setTitle("Event Clash Detected");
+                            confirmAlert.setHeaderText("Scheduling Conflict");
+
+                            ButtonType result = confirmAlert.showAndWait().orElse(cancelBtn);
+
+                            if (result == cancelBtn) {
+                                return false; // user cancelled
+                            } else if (result == replaceExisting) {
+                                // Replace the single conflicting event
+                                MainEvent toRemove = clashes.get(0);
+                                manager.deleteEvent(toRemove.getEventId());
+                            }
+                        } else {
+                            // Multiple clashes: do not allow adding, prompt user to adjust
+                            showAlert(Alert.AlertType.WARNING, "Event Clash Detected", "This event clashes with multiple existing events. Please adjust the event time or delete conflicting events.");
                             return false;
                         }
                     }
-                    
+
                     manager.addEvent(event);
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Event added successfully!");
                     return true;
@@ -460,14 +474,26 @@ public class CalendarAppGUI extends Application {
                                    .append(" - ").append(clash.getEndDateTime().format(dateTimeFormatter))
                                    .append(")\n");
                         }
-                        clashMsg.append("\nDo you still want to add this recurring event?");
-                        
-                        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                        confirmAlert.setTitle("Event Clash Detected");
-                        confirmAlert.setHeaderText("Scheduling Conflict");
-                        confirmAlert.setContentText(clashMsg.toString());
-                        
-                        if (confirmAlert.showAndWait().get() != ButtonType.OK) {
+                        clashMsg.append("\n\nChoose an action:");
+
+                        ButtonType replaceExisting = new ButtonType("Replace Existing", ButtonBar.ButtonData.YES);
+                        ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+                        if (clashes.size() == 1) {
+                            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION, clashMsg.toString(), replaceExisting, cancelBtn);
+                            confirmAlert.setTitle("Event Clash Detected");
+                            confirmAlert.setHeaderText("Scheduling Conflict");
+
+                            ButtonType result = confirmAlert.showAndWait().orElse(cancelBtn);
+
+                            if (result == cancelBtn) {
+                                return false;
+                            } else if (result == replaceExisting) {
+                                MainEvent toRemove = clashes.get(0);
+                                manager.deleteEvent(toRemove.getEventId());
+                            }
+                        } else {
+                            showAlert(Alert.AlertType.WARNING, "Event Clash Detected", "This recurring event clashes with multiple existing events. Please adjust the schedule or delete conflicting events.");
                             return false;
                         }
                     }
